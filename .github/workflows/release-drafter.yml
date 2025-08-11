@@ -15,6 +15,5 @@ jobs:
       - uses: release-drafter/release-drafter@v6
         with:
           # Provide the path to the config file *relative to the root* of the .github repository.
-          config-name: Homies-Tech-Innovation/.github/.github/release-drafter.yml@main
-        env:
+          config-name: .github/release-drafter.yml
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
