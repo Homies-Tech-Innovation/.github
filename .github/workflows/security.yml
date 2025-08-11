@@ -1,6 +1,5 @@
 # File: .github/.github/workflows/security.yml
 name: Reusable - Security Checks
-
 on:
   workflow_call:
     inputs:
@@ -9,13 +8,11 @@ on:
         required: false
         type: string
         default: "javascript,python"
-
 permissions:
   contents: read
   security-events: write
   actions: read # Needed for trufflesecurity/trufflehog to clone private repos
   pull-requests: write
-
 jobs:
   security-checks:
     runs-on: ubuntu-latest
@@ -41,13 +38,25 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
+      - name: Check for CodeQL-supported files
+        id: check-files
+        run: |
+          # Check for supported file extensions
+          if find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.py" -o -name "*.java" -o -name "*.go" -o -name "*.cs" -o -name "*.cpp" -o -name "*.c" -o -name "*.rb" -o -name "*.swift" \) -not -path "./.git/*" -not -path "./node_modules/*" | head -1 | grep -q .; then
+            echo "supported-files=true" >> $GITHUB_OUTPUT
+          else
+            echo "supported-files=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Initialize CodeQL
+        if: steps.check-files.outputs.supported-files == 'true'
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ inputs.languages }}
           queries: security-extended # More thorough than default
 
       - name: Perform CodeQL Analysis
+        if: steps.check-files.outputs.supported-files == 'true'
         uses: github/codeql-action/analyze@v3
 
       - name: Secret detection with TruffleHog
@@ -64,13 +73,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const codeqlSkipped = '${{ steps.check-files.outputs.supported-files }}' !== 'true';
             const comment = `
             ## 🛡️ Security Scan Summary
-
             - ✅ **Trivy vulnerability scan**: Completed
-            - ✅ **CodeQL analysis**: Completed
+            - ${codeqlSkipped ? '⏭️' : '✅'} **CodeQL analysis**: ${codeqlSkipped ? 'Skipped (no supported files found)' : 'Completed'}
             - ✅ **Secret detection**: Completed
-
             Please check the 'Security' tab for detailed results and any potential vulnerabilities.
             `;
             github.rest.issues.createComment({
