@@ -1,15 +1,8 @@
-name: Ruff Auto-Formatter
+# File: .github/.github/workflows/ruff-format.yml
+name: Reusable - Ruff Auto-Formatter
 
 on:
-  pull_request:
-    branches:
-      - "dev"
-      - "main"
-      - "test-**"
-    paths:
-      - "**/*.py"
-      - "**/pyproject.toml"
-      - "**/ruff.toml"
+  workflow_call:
 
 permissions:
   contents: write
@@ -20,25 +13,40 @@ jobs:
     name: Format Code with Ruff
     runs-on: ubuntu-latest
     steps:
+      - name: Check for relevant file changes
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/*.py
+            **/pyproject.toml
+            **/ruff.toml
+
       - name: Checkout PR Branch
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
+        if: steps.changed-files.outputs.any_changed == 'true'
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.11"
 
       - name: Install uv and Ruff
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           pip install uv
           uv pip install ruff --system
 
       - name: Run Ruff Linter (check only)
+        if: steps.changed-files.outputs.any_changed == 'true'
         id: ruff-check
         run: |
+          # The `|| true` prevents the workflow from failing if linting issues are found.
+          # We report the status via the output instead.
           if uvx ruff check . --output-format=json > ruff-check-results.json 2>&1; then
             echo "ruff_check_passed=true" >> $GITHUB_OUTPUT
           else
@@ -46,32 +54,31 @@ jobs:
           fi
 
       - name: Run Ruff Formatter
+        if: steps.changed-files.outputs.any_changed == 'true'
         run: uvx ruff format .
 
       - name: Check for formatting changes
+        if: steps.changed-files.outputs.any_changed == 'true'
         id: git-check
         run: |
           if ! git diff --quiet; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
-            echo "No changes to commit."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Commit and Push Changes
         if: steps.git-check.outputs.has_changes == 'true'
         run: |
-          # Configure git with a bot user
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # Count the number of formatted files and store it in an environment variable for the next step
           echo "FILES_FORMATTED=$(git status --porcelain | wc -l)" >> $GITHUB_ENV
-          # Add all changes, commit them, and push to the PR's branch
           git add .
           git commit -m "style: ✨ auto-format with Ruff"
           git push
 
       - name: Comment on PR
+        if: steps.changed-files.outputs.any_changed == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -85,10 +92,10 @@ jobs:
               comment += `✨ **Auto-formatted**: ${filesFormatted} file(s) with Ruff!\n`;
               comment += `📝 Changes have been automatically committed to this PR.\n\n`;
             } else {
-              comment += `✅ **Formatting**: All files already properly formatted\n`;
+              comment += `✅ **Formatting**: All Python files are already properly formatted.\n`;
             }
 
-            comment += `${ruffCheckPassed ? '✅' : '⚠️'} **Linting**: ${ruffCheckPassed ? 'No issues found' : 'Issues detected (check logs)'}\n`;
+            comment += `${ruffCheckPassed ? '✅' : '⚠️'} **Linting**: ${ruffCheckPassed ? 'No issues found.' : 'Issues detected (check logs for details).'}\n`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -96,3 +103,7 @@ jobs:
               repo: context.repo.repo,
               body: comment
             });
+
+      - name: Report no relevant files changed
+        if: steps.changed-files.outputs.any_changed != 'true'
+        run: echo "No Python files changed. Skipping Ruff formatting."
