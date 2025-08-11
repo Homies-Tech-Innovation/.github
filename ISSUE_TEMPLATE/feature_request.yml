@@ -1,0 +1,114 @@
+name: "🚀 Feature Request"
+description: "Propose a new feature or enhancement."
+title: "[FEAT] <A short, descriptive title for the feature>"
+labels: ["feature", "needs-scoping"]
+body:
+  - type: markdown
+    attributes:
+      value: "### Thanks for proposing a new feature! Please provide the following details to help us scope and prioritize the work."
+
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: "Problem Statement"
+      description: "What problem does this feature solve? What is the user story or business need?"
+      placeholder: "As a [type of user], I want to [perform some action] so that I can [achieve some goal]."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe your proposed solution. How should this feature work from a user's perspective?"
+      placeholder: "We will add a new settings page with a toggle to enable/disable notifications, allowing users to control their email preferences."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "How will we know this feature is complete? Please list specific, testable conditions."
+      placeholder: |
+        - [ ] Users can navigate to the new settings page
+        - [ ] The notification toggle is present and functional
+        - [ ] Toggling notifications off prevents email notifications from being sent
+        - [ ] Settings are persisted across browser sessions
+        - [ ] Feature works on both desktop and mobile
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority Level"
+      description: "How important is this feature to you or your users?"
+      options:
+        - "Low - Nice to have, no urgency"
+        - "Medium - Would improve workflow significantly"
+        - "High - Important for user experience"
+        - "Critical - Blocking key functionality"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort-estimate
+    attributes:
+      label: "Estimated Complexity"
+      description: "Your rough estimate of implementation complexity (this helps with planning)"
+      options:
+        - "Small - Few hours of work"
+        - "Medium - 1-3 days of work"
+        - "Large - 1-2 weeks of work"
+        - "Extra Large - Multiple weeks"
+        - "Unknown - Need technical analysis"
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternative Solutions"
+      description: "Have you considered any alternative approaches? What other solutions might work?"
+      placeholder: "Instead of a settings page, we could add inline toggles, or use a modal dialog..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: business-value
+    attributes:
+      label: "Business Value"
+      description: "Why is this feature important now? What impact will it have?"
+      placeholder: "This will reduce support tickets by 30% and improve user retention..."
+    validations:
+      required: false
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: "Dependencies"
+      description: "Are there any other issues, PRs, or external dependencies this work relies on?"
+      placeholder: "e.g., Issue #42, PR #55, API changes from Team X"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: feature-flags
+    attributes:
+      label: "Implementation Considerations"
+      description: "Please check any that apply to this feature:"
+      options:
+        - label: "This feature should be behind a feature flag initially"
+        - label: "This feature requires database changes"
+        - label: "This feature requires API changes"
+        - label: "This feature affects existing user workflows"
+        - label: "This feature requires documentation updates"
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Contributing Guidelines**: Please review our [contributing guidelines](../CONTRIBUTING.md) before submitting.
+
+        **Code of Conduct**: By participating, you agree to abide by our [Code of Conduct](../CODE_OF_CONDUCT.md).

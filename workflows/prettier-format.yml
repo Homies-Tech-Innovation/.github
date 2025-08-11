@@ -1,0 +1,136 @@
+name: Prettier Auto-Formatter
+
+on:
+  pull_request:
+    branches:
+      - "dev"
+      - "main"
+      - "test-**"
+    paths:
+      - "**/*.{js,jsx,ts,tsx,json,css,scss,md,html,vue}"
+      - "**/.prettierrc*"
+      - "**/prettier.config.js"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  format-and-commit:
+    name: Format Code with Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: |
+          if [ -f "package-lock.json" ]; then
+            npm ci
+          elif [ -f "yarn.lock" ]; then
+            yarn install --frozen-lockfile
+          elif [ -f "package.json" ]; then
+            npm install
+          else
+            npm install prettier
+          fi
+
+      - name: Run ESLint (check only)
+        id: eslint-check
+        run: |
+          if [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ] || [ -f "eslint.config.js" ]; then
+            npx eslint . --ext .js,.jsx,.ts,.tsx --format=json --output-file=eslint-results.json || echo "eslint_issues=true" >> $GITHUB_OUTPUT
+            echo "eslint_ran=true" >> $GITHUB_OUTPUT
+          else
+            echo "eslint_ran=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run TypeScript check
+        id: typescript-check
+        run: |
+          if [ -f "tsconfig.json" ]; then
+            npx tsc --noEmit || echo "typescript_issues=true" >> $GITHUB_OUTPUT
+            echo "typescript_ran=true" >> $GITHUB_OUTPUT
+          else
+            echo "typescript_ran=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Prettier Formatter
+        run: |
+          if [ -f ".prettierrc" ] || [ -f ".prettierrc.json" ] || [ -f ".prettierrc.js" ] || [ -f "prettier.config.js" ]; then
+            npx prettier --write .
+          else
+            # Use default prettier settings if no config found
+            npx prettier --write "**/*.{js,jsx,ts,tsx,json,css,scss,md,html}"
+          fi
+
+      - name: Check for formatting changes
+        id: git-check
+        run: |
+          if ! git diff --quiet; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changes to commit."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and Push Changes
+        if: steps.git-check.outputs.has_changes == 'true'
+        run: |
+          # Configure git with a bot user
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Count the number of formatted files and store it in an environment variable for the next step
+          echo "FILES_FORMATTED=$(git status --porcelain | wc -l)" >> $GITHUB_ENV
+          # Add all changes, commit them, and push to the PR's branch
+          git add .
+          git commit -m "style: ✨ auto-format with Prettier"
+          git push
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const hasChanges = '${{ steps.git-check.outputs.has_changes }}' === 'true';
+            const eslintRan = '${{ steps.eslint-check.outputs.eslint_ran }}' === 'true';
+            const eslintIssues = '${{ steps.eslint-check.outputs.eslint_issues }}' === 'true';
+            const typescriptRan = '${{ steps.typescript-check.outputs.typescript_ran }}' === 'true';
+            const typescriptIssues = '${{ steps.typescript-check.outputs.typescript_issues }}' === 'true';
+            const filesFormatted = process.env.FILES_FORMATTED || '0';
+
+            let comment = `## 🎨 JavaScript/TypeScript Results\n\n`;
+
+            if (hasChanges) {
+              comment += `✨ **Auto-formatted**: ${filesFormatted} file(s) with Prettier!\n`;
+              comment += `📝 Changes have been automatically committed to this PR.\n\n`;
+            } else {
+              comment += `✅ **Formatting**: All files already properly formatted\n`;
+            }
+
+            if (eslintRan) {
+              comment += `${eslintIssues ? '⚠️' : '✅'} **ESLint**: ${eslintIssues ? 'Issues detected (check logs)' : 'No issues found'}\n`;
+            }
+
+            if (typescriptRan) {
+              comment += `${typescriptIssues ? '⚠️' : '✅'} **TypeScript**: ${typescriptIssues ? 'Type errors found (check logs)' : 'No type errors'}\n`;
+            }
+
+            if (!eslintRan && !typescriptRan) {
+              comment += `ℹ️ No ESLint or TypeScript configs found.\n`;
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

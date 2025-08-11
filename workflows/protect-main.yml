@@ -1,0 +1,136 @@
+name: PR Guard - Protect Main Branch
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: ["main"]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  guard-main-branch:
+    name: Guard Main Branch from Direct PRs
+    runs-on: ubuntu-latest
+    if: github.head_ref != 'dev'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get branch info
+        id: branch-info
+        run: |
+          echo "source_branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          echo "target_branch=${{ github.base_ref }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.actor }}" >> $GITHUB_OUTPUT
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+
+      - name: Check if hotfix branch
+        id: check-hotfix
+        run: |
+          if [[ "${{ github.head_ref }}" == hotfix/* ]] || [[ "${{ github.head_ref }}" == *hotfix* ]]; then
+            echo "is_hotfix=true" >> $GITHUB_OUTPUT
+            echo "🔥 Detected hotfix branch: ${{ github.head_ref }}"
+          else
+            echo "is_hotfix=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add warning comment for regular branches
+        if: steps.check-hotfix.outputs.is_hotfix == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ steps.branch-info.outputs.pr_number }} --body "## 🚨 Pull Request Warning 🚨
+
+          > **This PR is targeting \`main\` directly from \`${{ steps.branch-info.outputs.source_branch }}\`**
+
+          ### ⚠️ Recommended Workflow:
+          1. **Target \`dev\` branch** instead of \`main\`
+          2. Once merged to \`dev\`, create a PR from \`dev\` → \`main\`
+
+          ### 🔄 Why This Matters:
+          - \`dev\` branch acts as integration branch for testing
+          - \`main\` should only receive stable, tested code from \`dev\`
+          - This maintains clean release history and reduces conflicts
+
+          ### 🛠️ How to Fix:
+          \`\`\`bash
+          # Change the target branch of this PR to dev
+          # Or close this PR and create a new one targeting dev
+          \`\`\`
+
+          **If this is urgent, please add the \`hotfix\` label and explain why it needs to go directly to main.**
+
+          Thanks for keeping our branches clean! 🙏
+
+          ---
+          *This is an automated message to help maintain our branching strategy.*"
+
+      - name: Add hotfix acknowledgment comment
+        if: steps.check-hotfix.outputs.is_hotfix == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ steps.branch-info.outputs.pr_number }} --body "## 🔥 Hotfix Detected
+
+          This appears to be a **hotfix branch** targeting \`main\` directly.
+
+          ### ✅ Hotfix Protocol:
+          - Direct PRs to \`main\` are allowed for critical fixes
+          - Please ensure this change is **urgent and necessary**
+          - Consider creating a follow-up PR to merge these changes back to \`dev\`
+
+          ### 📋 Hotfix Checklist:
+          - [ ] This fixes a critical production issue
+          - [ ] Changes have been tested
+          - [ ] Will create follow-up PR to \`dev\` branch after merge
+
+          **Proceeding with hotfix review process** 🚀
+
+          ---
+          *Automated hotfix detection - please review carefully.*"
+
+      - name: Add workflow guidance comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ steps.branch-info.outputs.pr_number }} --body "## 📋 Branch Strategy Reminder
+
+          ### 🌟 Our Git Flow:
+          \`\`\`
+          feature/bug branches → dev → main → production
+          \`\`\`
+
+          ### 🎯 Branch Purposes:
+          - **\`main\`**: Production-ready, stable code
+          - **\`dev\`**: Integration branch for testing features
+          - **\`feature/*\`**: Individual feature development
+          - **\`hotfix/*\`**: Critical production fixes (can go to main)
+
+          ### 🔄 Normal Workflow:
+          1. Create feature branch from \`dev\`
+          2. Open PR: \`feature/xyz\` → \`dev\` 
+          3. After testing: \`dev\` → \`main\`
+          4. Deploy from \`main\`
+
+          Need help with Git workflows? Check our [CONTRIBUTING.md](../CONTRIBUTING.md) guide!
+
+          ---
+          *Automated branch protection guidance*"
+
+      - name: Request review from code owners
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Add labels for better organization
+          gh pr edit ${{ steps.branch-info.outputs.pr_number }} --add-label "needs-review,direct-to-main"
+
+          # If it's a hotfix, add hotfix label
+          if [[ "${{ steps.check-hotfix.outputs.is_hotfix }}" == "true" ]]; then
+            gh pr edit ${{ steps.branch-info.outputs.pr_number }} --add-label "hotfix,urgent"
+          else
+            gh pr edit ${{ steps.branch-info.outputs.pr_number }} --add-label "workflow-violation"
+          fi
+
+          echo "✅ Labels added to PR for proper categorization"

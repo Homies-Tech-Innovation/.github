@@ -1,0 +1,147 @@
+name: "🔧 Code Refactoring"
+description: "Suggest an improvement to the internal code structure, performance, or maintainability."
+title: "[REFACTOR] <A short description of the area to improve>"
+labels: ["refactor", "technical-debt"]
+body:
+  - type: markdown
+    attributes:
+      value: "### Thanks for helping improve our codebase! Refactoring improves code quality, performance, or maintainability without changing external behavior."
+
+  - type: textarea
+    id: code-location
+    attributes:
+      label: "Code Location"
+      description: "Please specify the files, modules, classes, or functions that need refactoring."
+      placeholder: |
+        - components/UserProfile.js (lines 45-120)
+        - utils/calculations.js - The entire `calculateOrderTotal` function
+        - services/api/ - All API service classes
+    validations:
+      required: true
+
+  - type: dropdown
+    id: refactor-type
+    attributes:
+      label: "Type of Refactoring"
+      description: "What type of refactoring is this?"
+      options:
+        - "Code Structure - Improve organization, separation of concerns"
+        - "Performance - Optimize for speed or memory usage"
+        - "Readability - Make code easier to understand"
+        - "Testability - Make code easier to test"
+        - "Maintainability - Reduce complexity, remove duplication"
+        - "Security - Address security concerns"
+        - "Dependencies - Update or remove dependencies"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: "Technical Debt Severity"
+      description: "How urgent is this refactoring work?"
+      options:
+        - "Low - Code works fine, but could be cleaner"
+        - "Medium - Slowing down development velocity"
+        - "High - Making new features difficult to implement"
+        - "Critical - Causing bugs, security issues, or performance problems"
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-problems
+    attributes:
+      label: "Current Problems"
+      description: "What specific issues exist with the current code? Why does it need refactoring?"
+      placeholder: |
+        - The UserProfile component has 500+ lines mixing data fetching, business logic, and UI rendering
+        - No unit tests exist for the complex state logic
+        - Adding new profile fields requires changing multiple unrelated parts of the code
+        - Performance issues when rendering large user lists
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe the desired state after refactoring. What's your high-level plan?"
+      placeholder: |
+        1. Extract state logic into a custom React hook (`useUserProfile`)
+        2. Create separate components for data display vs. editing modes
+        3. Move API calls to a dedicated service layer
+        4. Add comprehensive unit tests for the new hook and components
+        5. Implement proper error handling and loading states
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: "Expected Benefits"
+      description: "What improvements will this refactoring provide?"
+      placeholder: |
+        - Reduced complexity: Split 500-line component into 4 focused components
+        - Better testability: State logic can be tested independently
+        - Improved performance: Reduced unnecessary re-renders
+        - Easier maintenance: Clear separation of concerns
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort-estimate
+    attributes:
+      label: "Estimated Effort"
+      description: "Rough estimate of the work involved"
+      options:
+        - "Small - Few hours, minimal risk"
+        - "Medium - 1-3 days, moderate testing needed"
+        - "Large - 1-2 weeks, significant changes"
+        - "Extra Large - Multiple weeks, major restructuring"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: risks-considerations
+    attributes:
+      label: "Risks & Considerations"
+      description: "Please check any that apply to this refactoring:"
+      options:
+        - label: "This refactoring affects critical user-facing functionality"
+        - label: "Changes will require database migrations"
+        - label: "API changes may affect external integrations"
+        - label: "Significant test updates will be needed"
+        - label: "Documentation updates will be required"
+        - label: "May require coordination with other teams"
+
+  - type: checkboxes
+    id: verification-plan
+    attributes:
+      label: "Verification Plan"
+      description: "How will we confirm the refactor was successful and didn't introduce bugs?"
+      options:
+        - label: "All existing unit/integration tests must pass"
+          required: true
+        - label: "Manual testing of affected features"
+          required: false
+        - label: "New tests will be added to cover refactored code"
+          required: false
+        - label: "Performance benchmarks will be run to confirm improvements"
+          required: false
+        - label: "Code review focusing on maintainability and readability"
+          required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Any other relevant information, links to related issues, or technical details"
+      placeholder: "Related to issue #123. See performance benchmarks in Slack thread. Technical spike completed in PR #456."
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Contributing Guidelines**: Please review our [contributing guidelines](../CONTRIBUTING.md) before submitting.
+
+        **Code of Conduct**: By participating, you agree to abide by our [Code of Conduct](../CODE_OF_CONDUCT.md).

@@ -1,0 +1,111 @@
+name: 🐞 Bug Report
+description: Create a report to help us improve our project.
+title: "[BUG] <Short description of bug>"
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below to help us understand and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - "Critical - System crash, data loss, security vulnerability"
+        - "High - Feature completely broken, major functionality affected"
+        - "Medium - Feature partially broken, workaround available"
+        - "Low - Minor issue, cosmetic problem"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Clear steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: A clear and concise description of what actually happened.
+      placeholder: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide details about your environment
+      placeholder: |
+        - OS: [e.g. Windows 10, macOS 12.0, Ubuntu 20.04]
+        - Browser: [e.g. Chrome 96, Firefox 94, Safari 15] (if applicable)
+        - Application version: [e.g. v1.2.3]
+        - Environment: [e.g. Development, Staging, Production]
+        - Device: [e.g. Desktop, Mobile, Tablet] (if applicable)
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: If applicable, add error logs to help explain your problem
+      placeholder: Paste any error messages, stack traces, or logs here...
+      render: shell
+
+  - type: checkboxes
+    id: attempted_solutions
+    attributes:
+      label: Attempted Solutions
+      description: What have you tried to resolve this issue?
+      options:
+        - label: "Cleared cache/cookies (if web application)"
+        - label: "Restarted the application"
+        - label: "Checked documentation/FAQ"
+        - label: "Tried on different browser/device"
+        - label: "Updated to latest version"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (screenshots, videos, related issues)
+      placeholder: Any additional information that might be helpful...
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Contributing Guidelines**: Please review our [contributing guidelines](../CONTRIBUTING.md) before submitting.
+        
+        **Code of Conduct**: By participating, you agree to abide by our [Code of Conduct](../CODE_OF_CONDUCT.md).
