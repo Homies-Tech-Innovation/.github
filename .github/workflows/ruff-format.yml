@@ -13,6 +13,16 @@ jobs:
     name: Format Code with Ruff
     runs-on: ubuntu-latest
     steps:
+      # STEP 1: Checkout must happen FIRST so the .git directory is available.
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Fetch depth 0 is needed for changed-files to compare history correctly
+          fetch-depth: 0
+
+      # STEP 2: Now that the code is checked out, we can check for changed files.
       - name: Check for relevant file changes
         id: changed-files
         uses: tj-actions/changed-files@v41
@@ -21,13 +31,6 @@ jobs:
             **/*.py
             **/pyproject.toml
             **/ruff.toml
-
-      - name: Checkout PR Branch
-        if: steps.changed-files.outputs.any_changed == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -45,8 +48,6 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         id: ruff-check
         run: |
-          # The `|| true` prevents the workflow from failing if linting issues are found.
-          # We report the status via the output instead.
           if uvx ruff check . --output-format=json > ruff-check-results.json 2>&1; then
             echo "ruff_check_passed=true" >> $GITHUB_OUTPUT
           else
@@ -85,18 +86,14 @@ jobs:
             const hasChanges = '${{ steps.git-check.outputs.has_changes }}' === 'true';
             const ruffCheckPassed = '${{ steps.ruff-check.outputs.ruff_check_passed }}' === 'true';
             const filesFormatted = process.env.FILES_FORMATTED || '0';
-
             let comment = `## 🐍 Python Ruff Results\n\n`;
-
             if (hasChanges) {
               comment += `✨ **Auto-formatted**: ${filesFormatted} file(s) with Ruff!\n`;
               comment += `📝 Changes have been automatically committed to this PR.\n\n`;
             } else {
               comment += `✅ **Formatting**: All Python files are already properly formatted.\n`;
             }
-
             comment += `${ruffCheckPassed ? '✅' : '⚠️'} **Linting**: ${ruffCheckPassed ? 'No issues found.' : 'Issues detected (check logs for details).'}\n`;
-
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
