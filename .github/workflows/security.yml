@@ -38,25 +38,73 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-      - name: Check for CodeQL-supported files
-        id: check-files
+      - name: Detect available languages
+        id: detect-languages
         run: |
-          # Check for supported file extensions
-          if find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.py" -o -name "*.java" -o -name "*.go" -o -name "*.cs" -o -name "*.cpp" -o -name "*.c" -o -name "*.rb" -o -name "*.swift" \) -not -path "./.git/*" -not -path "./node_modules/*" | head -1 | grep -q .; then
-            echo "supported-files=true" >> $GITHUB_OUTPUT
+          # Parse input languages
+          INPUT_LANGUAGES="${{ inputs.languages }}"
+          AVAILABLE_LANGUAGES=""
+
+          # Check each requested language
+          IFS=',' read -ra LANGS <<< "$INPUT_LANGUAGES"
+          for lang in "${LANGS[@]}"; do
+            lang=$(echo "$lang" | xargs) # trim whitespace
+            case $lang in
+              "javascript")
+                if find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
+                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
+                fi
+                ;;
+              "python")
+                if find . -type f -name "*.py" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
+                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
+                fi
+                ;;
+              "java")
+                if find . -type f -name "*.java" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
+                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
+                fi
+                ;;
+              "go")
+                if find . -type f -name "*.go" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
+                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
+                fi
+                ;;
+              "csharp")
+                if find . -type f -name "*.cs" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
+                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
+                fi
+                ;;
+              "cpp")
+                if find . -type f \( -name "*.cpp" -o -name "*.c" -o -name "*.h" \) -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
+                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
+                fi
+                ;;
+              "ruby")
+                if find . -type f -name "*.rb" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
+                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
+                fi
+                ;;
+            esac
+          done
+
+          echo "available-languages=$AVAILABLE_LANGUAGES" >> $GITHUB_OUTPUT
+          if [ -n "$AVAILABLE_LANGUAGES" ]; then
+            echo "has-languages=true" >> $GITHUB_OUTPUT
           else
-            echo "supported-files=false" >> $GITHUB_OUTPUT
+            echo "has-languages=false" >> $GITHUB_OUTPUT
           fi
+          echo "Detected languages: $AVAILABLE_LANGUAGES"
 
       - name: Initialize CodeQL
-        if: steps.check-files.outputs.supported-files == 'true'
+        if: steps.detect-languages.outputs.has-languages == 'true'
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ inputs.languages }}
+          languages: ${{ steps.detect-languages.outputs.available-languages }}
           queries: security-extended # More thorough than default
 
       - name: Perform CodeQL Analysis
-        if: steps.check-files.outputs.supported-files == 'true'
+        if: steps.detect-languages.outputs.has-languages == 'true'
         uses: github/codeql-action/analyze@v3
 
       - name: Secret detection with TruffleHog
@@ -73,7 +121,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const codeqlSkipped = '${{ steps.check-files.outputs.supported-files }}' !== 'true';
+            const codeqlSkipped = '${{ steps.detect-languages.outputs.has-languages }}' !== 'true';
             const comment = `
             ## 🛡️ Security Scan Summary
             - ✅ **Trivy vulnerability scan**: Completed
