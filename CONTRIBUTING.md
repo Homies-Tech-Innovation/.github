@@ -57,3 +57,15 @@ Once your work is complete, commit your changes and push your branch to the repo
 4.  Move the issue card on the project board to the **In Review** column.
 
 That's it\! Thank you again for your contribution. We look forward to collaborating with you\!
+
+### 📝 Documentation
+
+It's essential that our project documentation stays current. When you introduce new functionality, fix a bug that affects the system's architecture, or refactor a significant portion of the code, you must update the corresponding **system architecture documentation**.
+
+Specifically, this means you need to:
+
+-   Add or update **function signatures** and their descriptions.
+-   Detail any **Data Transfer Objects (DTOs)**, including their fields and purpose.
+-   Clarify the interactions between different components or services.
+
+You can find this documentation in the `docs` directory. Please consult with a project manager if you're unsure which files to update or if a new file needs to be created. This step is a required part of your pull request and will be checked during the review process.
