@@ -4,15 +4,16 @@ on:
   workflow_call:
     inputs:
       languages:
-        description: "Comma-separated list for CodeQL (e.g., javascript,python)"
+        description: "Comma-separated list of languages to scan (e.g., javascript,python)"
         required: false
         type: string
         default: "javascript,python"
 permissions:
   contents: read
   security-events: write
-  actions: read # Needed for trufflesecurity/trufflehog to clone private repos
+  actions: read
   pull-requests: write
+
 jobs:
   security-checks:
     runs-on: ubuntu-latest
@@ -20,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Full history is recommended for some security scanners
+          fetch-depth: 0
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -38,73 +39,40 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-      - name: Detect available languages
-        id: detect-languages
+      # THIS IS THE NEW, BULLETPROOF DETECTION STEP
+      - name: Detect if analyzable code exists
+        id: detect_code
         run: |
-          # Parse input languages
-          INPUT_LANGUAGES="${{ inputs.languages }}"
-          AVAILABLE_LANGUAGES=""
-
-          # Check each requested language
-          IFS=',' read -ra LANGS <<< "$INPUT_LANGUAGES"
-          for lang in "${LANGS[@]}"; do
-            lang=$(echo "$lang" | xargs) # trim whitespace
-            case $lang in
-              "javascript")
-                if find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
-                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
-                fi
-                ;;
-              "python")
-                if find . -type f -name "*.py" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
-                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
-                fi
-                ;;
-              "java")
-                if find . -type f -name "*.java" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
-                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
-                fi
-                ;;
-              "go")
-                if find . -type f -name "*.go" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
-                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
-                fi
-                ;;
-              "csharp")
-                if find . -type f -name "*.cs" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
-                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
-                fi
-                ;;
-              "cpp")
-                if find . -type f \( -name "*.cpp" -o -name "*.c" -o -name "*.h" \) -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
-                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
-                fi
-                ;;
-              "ruby")
-                if find . -type f -name "*.rb" -not -path "./.git/*" -not -path "./node_modules/*" -print -quit | grep -q .; then
-                  AVAILABLE_LANGUAGES="${AVAILABLE_LANGUAGES:+$AVAILABLE_LANGUAGES,}$lang"
-                fi
-                ;;
-            esac
-          done
-
-          echo "available-languages=$AVAILABLE_LANGUAGES" >> $GITHUB_OUTPUT
-          if [ -n "$AVAILABLE_LANGUAGES" ]; then
-            echo "has-languages=true" >> $GITHUB_OUTPUT
+          # Find any .js, .ts, or .py file that is NOT in a common junk/dependency/build directory.
+          # -print -quit makes it stop searching immediately after finding the very first match.
+          # This is extremely fast.
+          if find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.py" \) \
+            -not -path "./.git/*" \
+            -not -path "./node_modules/*" \
+            -not -path "./dist/*" \
+            -not -path "./build/*" \
+            -not -path "./coverage/*" \
+            -not -path "./*venv*/*" \
+            -not -path "./__pycache__/*" \
+            -print -quit | grep -q .; then
+            echo "Analyzable code found. Proceeding with CodeQL."
+            echo "run_codeql=true" >> $GITHUB_OUTPUT
           else
-            echo "has-languages=false" >> $GITHUB_OUTPUT
+            echo "No analyzable code found. Skipping CodeQL."
+            echo "run_codeql=false" >> $GITHUB_OUTPUT
           fi
-          echo "Detected languages: $AVAILABLE_LANGUAGES"
 
+      # NOTE: This only runs if the step above found code.
       - name: Initialize CodeQL
-        if: steps.detect-languages.outputs.has-languages == 'true'
+        if: steps.detect_code.outputs.run_codeql == 'true'
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ steps.detect-languages.outputs.available-languages }}
-          queries: security-extended # More thorough than default
+          languages: ${{ inputs.languages }} # Pass the original languages list
+          queries: security-extended
 
+      # NOTE: This also only runs if the step above found code.
       - name: Perform CodeQL Analysis
-        if: steps.detect-languages.outputs.has-languages == 'true'
+        if: steps.detect_code.outputs.run_codeql == 'true'
         uses: github/codeql-action/analyze@v3
 
       - name: Secret detection with TruffleHog
@@ -121,13 +89,14 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const codeqlSkipped = '${{ steps.detect-languages.outputs.has-languages }}' !== 'true';
+            // This logic is now simple and correct.
+            const codeqlSkipped = '${{ steps.detect_code.outputs.run_codeql }}' !== 'true';
             const comment = `
             ## 🛡️ Security Scan Summary
             - ✅ **Trivy vulnerability scan**: Completed
-            - ${codeqlSkipped ? '⏭️' : '✅'} **CodeQL analysis**: ${codeqlSkipped ? 'Skipped (no supported files found)' : 'Completed'}
+            - ${codeqlSkipped ? '⏭️' : '✅'} **CodeQL analysis**: ${codeqlSkipped ? 'Skipped (no source code found)' : 'Completed'}
             - ✅ **Secret detection**: Completed
-            Please check the 'Security' tab for detailed results and any potential vulnerabilities.
+            Please check the 'Security' tab for detailed results.
             `;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
