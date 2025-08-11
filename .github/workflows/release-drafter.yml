@@ -16,4 +16,5 @@ jobs:
         with:
           # Provide the path to the config file *relative to the root* of the .github repository.
           config-name: .github/release-drafter.yml
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
