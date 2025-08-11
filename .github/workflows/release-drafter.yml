@@ -16,6 +16,6 @@ jobs:
         with:
           # Tell Release Drafter where to find its config file in the central repo.
           # Assumes the config is at .github/.github/release-drafter.yml
-          config-name: Homies-Tech-Innovation/.github/.github/release-drafter.yml@main
+          config-name: release-drafter.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
