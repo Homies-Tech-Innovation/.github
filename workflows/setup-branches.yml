@@ -1,50 +1,53 @@
-name: Setup Branch Protection
+name: Reusable - Setup Branch Protection
 
 on:
-  repository_dispatch:
-    types: [setup-protection]
+  workflow_call:
   workflow_dispatch:
 
 jobs:
   protect-branches:
     runs-on: ubuntu-latest
-    steps:
-      - name: Protect main branch
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.repos.updateBranchProtection({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              branch: 'main',
-              required_status_checks: {
-                strict: true,
-                contexts: ['security-checks', 'lint-javascript', 'lint-python']
-              },
-              enforce_admins: false,
-              required_pull_request_reviews: {
-                required_approving_review_count: 1,
-                dismiss_stale_reviews: true,
-                require_code_owner_reviews: true,
-                require_last_push_approval: true
-              },
-              required_linear_history: false,
-              allow_force_pushes: false,
-              allow_deletions: false,
-              required_conversation_resolution: true,
-              lock_branch: false,
-              allow_fork_syncing: true,
-              restrictions: null
-            });
 
-      - name: Protect dev branch
+    strategy:
+      fail-fast: false
+      matrix:
+        branch_config:
+          - name: "main"
+            linear_history: false
+          - name: "dev"
+            linear_history: true
+
+    steps:
+      - name: Protect ${{ matrix.branch_config.name }} branch
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const branchName = '${{ matrix.branch_config.name }}';
+            const linearHistory = ${{ matrix.branch_config.linear_history }};
+
+            // Optional: Check if the branch exists before trying to protect it
+            try {
+              await github.rest.repos.getBranch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: branchName,
+              });
+              console.log(`✅ Branch '${branchName}' found. Applying protection rules...`);
+            } catch (error) {
+              if (error.status === 404) {
+                console.log(`⚠️ Branch '${branchName}' not found in repo ${context.repo.owner}/${context.repo.repo}. Skipping protection.`);
+                return; // Exit this job successfully
+              } else {
+                throw error; // Re-throw other errors
+              }
+            }
+
+            // Apply the protection rules
             await github.rest.repos.updateBranchProtection({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              branch: 'dev',
+              branch: branchName,
               required_status_checks: {
                 strict: true,
                 contexts: ['security-checks', 'lint-javascript', 'lint-python']
@@ -56,7 +59,7 @@ jobs:
                 require_code_owner_reviews: true,
                 require_last_push_approval: true
               },
-              required_linear_history: true,
+              required_linear_history: linearHistory,
               allow_force_pushes: false,
               allow_deletions: false, 
               required_conversation_resolution: true,
@@ -65,17 +68,9 @@ jobs:
               restrictions: null
             });
 
-      - name: Comment protection setup complete
-        uses: actions/github-script@v7
-        with:
-          script: |
-            console.log('✅ Branch protection rules configured for main and dev branches');
-            console.log('🔒 Features enabled:');
-            console.log('  - Required pull request reviews (1 approval)');
-            console.log('  - Dismiss stale reviews when new commits are pushed');
-            console.log('  - Require review from code owners');
-            console.log('  - Require approval of most recent reviewable push');
-            console.log('  - Require status checks to pass before merging');
-            console.log('  - Require linear history');
-            console.log('  - Require conversation resolution before merging');
-            console.log('  - Prevent force pushes and deletions');
+            console.log(`🔒 Branch protection successfully configured for '${branchName}'.`);
+            console.log(`   - Required Linear History: ${linearHistory}`);
+
+      - name: Final Summary
+        if: success()
+        run: echo "✅ All branch protection rules applied successfully."
