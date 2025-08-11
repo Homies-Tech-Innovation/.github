@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       languages:
-        description: "Comma-separated list of languages to scan (e.g., javascript,python)"
+        description: "Comma-separated list for CodeQL (e.g., javascript,python)"
         required: false
         type: string
         default: "javascript,python"
@@ -39,40 +39,58 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-      # THIS IS THE NEW, BULLETPROOF DETECTION STEP
-      - name: Detect if analyzable code exists
-        id: detect_code
+      # THIS IS THE NEW, CORRECT LANGUAGE DETECTION SCRIPT
+      - name: Detect Available Languages
+        id: detect-languages
         run: |
-          # Find any .js, .ts, or .py file that is NOT in a common junk/dependency/build directory.
-          # -print -quit makes it stop searching immediately after finding the very first match.
-          # This is extremely fast.
-          if find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.py" \) \
-            -not -path "./.git/*" \
-            -not -path "./node_modules/*" \
-            -not -path "./dist/*" \
-            -not -path "./build/*" \
-            -not -path "./coverage/*" \
-            -not -path "./*venv*/*" \
-            -not -path "./__pycache__/*" \
-            -print -quit | grep -q .; then
-            echo "Analyzable code found. Proceeding with CodeQL."
-            echo "run_codeql=true" >> $GITHUB_OUTPUT
-          else
-            echo "No analyzable code found. Skipping CodeQL."
-            echo "run_codeql=false" >> $GITHUB_OUTPUT
+          # Parse the list of languages the user wants to scan for
+          INPUT_LANGUAGES="${{ inputs.languages }}"
+
+          # This will hold the list of languages we ACTUALLY find
+          FOUND_LANGUAGES=""
+
+          # Define common exclusion paths
+          EXCLUSIONS="-not -path './.git/*' -not -path './node_modules/*' -not -path './dist/*' -not -path './build/*' -not -path './coverage/*' -not -path './*venv*/*' -not -path './__pycache__/*'"
+
+          # Check for each language INDIVIDUALLY
+          if [[ ",$INPUT_LANGUAGES," == *",javascript,"* ]]; then
+            if find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) $EXCLUSIONS -print -quit | grep -q .; then
+              echo "JavaScript/TypeScript source code found."
+              FOUND_LANGUAGES="${FOUND_LANGUAGES:+$FOUND_LANGUAGES,}javascript"
+            fi
           fi
 
-      # NOTE: This only runs if the step above found code.
+          if [[ ",$INPUT_LANGUAGES," == *",python,"* ]]; then
+            if find . -type f -name "*.py" $EXCLUSIONS -print -quit | grep -q .; then
+              echo "Python source code found."
+              FOUND_LANGUAGES="${FOUND_LANGUAGES:+$FOUND_LANGUAGES,}python"
+            fi
+          fi
+
+          # Add other languages here following the same pattern if needed...
+
+          # Set the outputs
+          if [ -n "$FOUND_LANGUAGES" ]; then
+            echo "Languages to scan: $FOUND_LANGUAGES"
+            echo "detected-languages=$FOUND_LANGUAGES" >> $GITHUB_OUTPUT
+            echo "has-languages=true" >> $GITHUB_OUTPUT
+          else
+            echo "No scannable source code found for the requested languages. Skipping CodeQL."
+            echo "has-languages=false" >> $GITHUB_OUTPUT
+          fi
+
+      # THIS STEP NOW ONLY RUNS IF THE SCRIPT ABOVE FOUND AT LEAST ONE LANGUAGE
       - name: Initialize CodeQL
-        if: steps.detect_code.outputs.run_codeql == 'true'
+        if: steps.detect-languages.outputs.has-languages == 'true'
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ inputs.languages }} # Pass the original languages list
+          # AND THIS IS THE CRITICAL FIX: We pass ONLY the languages that were actually found.
+          languages: ${{ steps.detect-languages.outputs.detected-languages }}
           queries: security-extended
 
-      # NOTE: This also only runs if the step above found code.
+      # This step will now only be asked to analyze languages that definitely exist.
       - name: Perform CodeQL Analysis
-        if: steps.detect_code.outputs.run_codeql == 'true'
+        if: steps.detect-languages.outputs.has-languages == 'true'
         uses: github/codeql-action/analyze@v3
 
       - name: Secret detection with TruffleHog
@@ -89,8 +107,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // This logic is now simple and correct.
-            const codeqlSkipped = '${{ steps.detect_code.outputs.run_codeql }}' !== 'true';
+            // This logic is now reliable because the detection step is accurate.
+            const codeqlSkipped = '${{ steps.detect-languages.outputs.has-languages }}' !== 'true';
             const comment = `
             ## 🛡️ Security Scan Summary
             - ✅ **Trivy vulnerability scan**: Completed
