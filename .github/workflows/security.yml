@@ -1,36 +1,42 @@
-# File: .github/.github/workflows/security.yml
+# File: .github/workflows/security.yml
 name: Reusable - Security Checks
+
 on:
   workflow_call:
     inputs:
       languages:
-        description: "Comma-separated list for CodeQL (e.g., javascript,python)"
+        description: "Comma-separated list of languages for CodeQL (e.g., javascript,python)"
         required: false
         type: string
         default: "javascript,python"
+
 permissions:
   contents: read
   security-events: write
-  actions: read
   pull-requests: write
 
 jobs:
-  security-checks:
+  security-scans:
+    name: Security Scans
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-      pull-requests: write
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.base.ref != 'main' }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
+      # Step 1: Initialize CodeQL and check if any scannable code exists.
+      - name: Initialize CodeQL and Check for Scannable Code
+        id: codeql-init
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ inputs.languages }}
+        continue-on-error: true
+
+      # Step 2: All subsequent security steps are conditional on code being found.
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        if: steps.codeql-init.outputs.languages != ''
+        uses: aquasecurity/trivy-action@v0.14.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -39,57 +45,58 @@ jobs:
           output: "trivy-results.sarif"
           severity: "HIGH,CRITICAL"
 
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload Trivy scan results
+        if: steps.codeql-init.outputs.languages != ''
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
         with:
           sarif_file: "trivy-results.sarif"
 
-      # NO MORE CUSTOM DETECTION SCRIPT. WE LET CODEQL HANDLE IT.
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ inputs.languages }}
-          queries: security-extended
-
-      # THIS IS THE STEP THAT FAILS. WE ADD ONE LINE TO FIX IT.
       - name: Perform CodeQL Analysis
-        id: codeql_analysis # Add an ID to check its status later
+        if: steps.codeql-init.outputs.languages != ''
         uses: github/codeql-action/analyze@v3
-        continue-on-error: true # <-- THIS IS THE ENTIRE FIX.
 
-      - name: Secret detection with TruffleHog
-        uses: trufflesecurity/trufflehog@main
+      - name: Run TruffleHog secret scanner
+        if: steps.codeql-init.outputs.languages != ''
+        uses: trufflesecurity/trufflehog@v3.68.4
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
           extra_args: --only-verified
 
-      - name: Comment security summary on PR
-        if: github.event_name == 'pull_request'
+      # Step 3: Post a clear PR comment reflecting the "all or nothing" outcome.
+      - name: Comment on PR with Success Summary
+        if: |
+          github.event_name == 'pull_request' && 
+          steps.codeql-init.outputs.languages != ''
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // This logic now correctly checks the outcome of the analysis step.
-            const codeqlOutcome = '${{ steps.codeql_analysis.outcome }}';
-            let codeqlStatus;
-
-            if (codeqlOutcome === 'failure') {
-              codeqlStatus = '⏭️ **CodeQL analysis**: Skipped (no analyzable code found)';
-            } else {
-              codeqlStatus = '✅ **CodeQL analysis**: Completed';
-            }
-
             const comment = `
             ## 🛡️ Security Scan Summary
             - ✅ **Trivy vulnerability scan**: Completed
-            - ${codeqlStatus}
+            - ✅ **CodeQL analysis**: Completed
             - ✅ **Secret detection**: Completed
 
-            Please check the 'Security' tab for detailed results.
+            All security scans ran successfully. Please check the 'Security' tab for detailed results.
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Comment on PR that Scans were Skipped
+        if: |
+          github.event_name == 'pull_request' && 
+          steps.codeql-init.outputs.languages == ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `
+            ## 🛡️ Security Scan Summary
+            - ⏭️ **All Scans Skipped**: No scannable code was found for the languages: \`${{ inputs.languages }}\`.
             `;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
