@@ -36,7 +36,7 @@ jobs:
       # Step 2: All subsequent security steps are conditional on code being found.
       - name: Run Trivy vulnerability scanner
         if: steps.codeql-init.outputs.languages != ''
-        uses: aquasecurity/trivy-action@v0.14.0
+        uses: aquasecurity/trivy-action@v0.32.0
         with:
           scan-type: "fs"
           scan-ref: "."
