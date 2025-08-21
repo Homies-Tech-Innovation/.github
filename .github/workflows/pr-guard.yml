@@ -1,70 +1,14 @@
-# File: .github/.github/workflows/pr-guard.yml
-name: Reusable - PR Guard
+name: PR Guard
 
 on:
   workflow_call:
 
-permissions:
-  pull-requests: write
-
 jobs:
-  guard-main-branch:
-    name: Guard Main Branch from Direct PRs
+  block-main-pr:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if branch is a hotfix
-        id: check-hotfix
+      - name: Fail PRs into main (unless from dev)
+        if: github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref != 'dev'
         run: |
-          if [[ "${{ github.event.pull_request.head.ref }}" == hotfix/* ]]; then
-            echo "is_hotfix=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_hotfix=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Construct Comment and Labels
-        id: construct-message
-        run: |
-          if [[ "${{ steps.check-hotfix.outputs.is_hotfix }}" == "true" ]]; then
-            MSG=$(cat <<'EOF'
-          ## 🔥 Hotfix Detected
-
-          This appears to be a **hotfix branch** targeting `main` directly.
-
-          ### ✅ Hotfix Protocol:
-          - Direct PRs to `main` are allowed for critical fixes.
-          - Please ensure this change is **urgent and necessary**.
-          - Consider creating a follow-up PR to merge these changes back to `dev`.
-          ---
-          *Automated hotfix detection - please review carefully.*
-          EOF
-          )
-            LABELS="hotfix,urgent,needs-review"
-          else
-            MSG=$(cat <<'EOF'
-          ## 🚨 Pull Request Warning: Target Branch
-
-          > **This PR is targeting `main` directly from `${{ github.event.pull_request.head.ref }}`**
-
-          Our standard workflow is `feature/*` → `dev` → `main`. Please consider changing the base branch of this PR to `dev`.
-
-          If this is an intentional hotfix, please rename your branch to start with `hotfix/`.
-
-          ---
-          *This is an automated message to help maintain our branching strategy.*
-          EOF
-          )
-            LABELS="workflow-violation,needs-review"
-          fi
-          # Using heredoc to handle multiline strings safely
-          echo "message<<EOF" >> $GITHUB_OUTPUT
-          echo "$MSG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "labels=$LABELS" >> $GITHUB_OUTPUT
-
-      - name: Post Comment and Add Labels
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          gh pr comment $PR_NUMBER --body "${{ steps.construct-message.outputs.message }}"
-          gh pr edit $PR_NUMBER --add-label "${{ steps.construct-message.outputs.labels }}"
+          echo "❌ Direct PRs to main are not allowed. Please PR into dev instead."
+          exit 1
