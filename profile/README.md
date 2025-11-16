@@ -18,7 +18,7 @@
 
 <br>
 
-## 👋 About Us
+## About Us
 
 We are **Homies – Tech & Innovation**, a collective of curious minds who believe the best way to learn is by building together. As a community of developers, makers, and problem-solvers, we thrive on turning ideas into real projects. From experimenting with full-stack applications to exploring the cutting edge of artificial intelligence, every project is an opportunity for us to grow, share, and inspire.
 
@@ -26,7 +26,7 @@ What drives us is collaboration. We’re not just here to write code in isolatio
 
 Our mission is simple: **learn together, build together, grow together**. By combining skills, creativity, and determination, we create meaningful projects that push our limits and make an impact. More than just a tech group, we are a community of homies who share a love for innovation and the drive to keep building, no matter where we are in our journeys.
 
-## 🚀 Get Involved
+## Get Involved
 
 Join our community on [Discord][discord-url] for discussions, collaboration, and updates. We're always excited to welcome new members!
 <br>
