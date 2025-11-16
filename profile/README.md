@@ -50,7 +50,7 @@ Join our community on [Discord][discord-url] for discussions, collaboration, and
 
 [discord-shield]: https://img.shields.io/discord/1313767817996402698?logo=discord&logoColor=white&label=discord&color=4d3dff
 [discord-url]: https://discord.com/invite/HP2YPGSrWU
-[teams-shield]: https://img.shields.io/badge/teams-3-blue?logo=github&logoColor=white
+[teams-shield]: https://img.shields.io/badge/teams-7+-blue?logo=github&logoColor=white
 [teams-url]: https://github.com/orgs/homies-tech-innovation/teams
 [members-shield]: https://img.shields.io/badge/members-10+-green?logo=github&logoColor=white
 [members-url]: https://github.com/orgs/homies-tech-innovation/people
