@@ -48,10 +48,6 @@ Join our community on [Discord][discord-url] for discussions, collaboration, and
   </tr>
 </table>
 
-<div align="center">
-  <img src="assets/footer.png" alt="Footer" />
-</div>
-
 [discord-shield]: https://img.shields.io/discord/1313767817996402698?logo=discord&logoColor=white&label=discord&color=4d3dff
 [discord-url]: https://discord.com/invite/HP2YPGSrWU
 [teams-shield]: https://img.shields.io/badge/teams-3-blue?logo=github&logoColor=white
