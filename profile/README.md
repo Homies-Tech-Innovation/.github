@@ -35,14 +35,14 @@ Join our community on [Discord][discord-url] for discussions, collaboration, and
   <tr>
     <td width="90" valign="middle" align="center">
       <a href="https://github.com/aditsuru-git">
-        <img src="https://github.com/aditsuru-git.png?size=96"
+        <img src="https://github.com/aditsuru.png?size=96"
              width="80" height="80"
              alt="@aditsuru-git"
              style="border-radius:50%;">
       </a>
     </td>
     <td valign="middle">
-      <h3 style="margin:0 0 6px 0;">Managed by <a href="https://github.com/aditsuru-git">@aditsuru-git</a></h3>
+      <h3 style="margin:0 0 6px 0;">Managed by <a href="https://github.com/aditsuru">@aditsuru</a></h3>
       <p style="margin:0;">Maintainer • Mentor • Organizer — keeping the Homies community running and building.</p>
     </td>
   </tr>
