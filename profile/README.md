@@ -10,9 +10,8 @@
   </a>
   <h3 align="center">Collaborative skill-building and collective problem-solving</h3>
 
-[![Discord][discord-shield]][discord-url]
-[![Teams][teams-shield]][teams-url]
-[![Members][members-shield]][members-url]
+[![Discord](https://img.shields.io/discord/1313767817996402698?logo=discord&logoColor=white&label=discord&color=4d3dff)](https://discord.com/invite/HP2YPGSrWU)
+[![Homies](https://img.shields.io/github/followers/homies-tech-innovation?logo=github&logoColor=black&label=Homies&color=2ea44f)](https://github.com/orgs/homies-tech-innovation/people)
 
 </div>
 
@@ -26,27 +25,48 @@ What drives us is collaboration. We’re not just here to write code in isolatio
 
 Our mission is simple: **learn together, build together, grow together**. By combining skills, creativity, and determination, we create meaningful projects that push our limits and make an impact. More than just a tech group, we are a community of homies who share a love for innovation and the drive to keep building, no matter where we are in our journeys.
 
+## Our Top Projects
+
+<h3 align="left">Research Engine</h3>
+
+An AI tool that helps you research about market, topics, and anything. [Get demo here](https://github.com/homies-tech-innovation/research-engine-server)
+
+<p align="left">
+  
+  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=research-engine-server&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/research-engine-server)
+  &nbsp; 
+  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=research-engine-client&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/research-engine-client)
+  
+</p>
+
+<h3 align="left">Aethel</h3>
+
+Experience a live, AI-powered writing space for all your stories and docs. [Get demo here](https://github.com/homies-tech-innovation/aethel)
+
+<p align="left">
+  
+  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=aethel&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/aethel)
+  
+</p>
+
 ## Get Involved
 
 Join our community on [Discord][discord-url] for discussions, collaboration, and updates. We're always excited to welcome new members!
-<br>
+<br clear="true">
 
-<table width="100%">
-  <tr>
-    <td width="90" valign="middle" align="center">
-      <a href="https://github.com/aditsuru-git">
-        <img src="https://github.com/aditsuru.png?size=96"
-             width="80" height="80"
-             alt="@aditsuru-git"
-             style="border-radius:50%;">
-      </a>
-    </td>
-    <td valign="middle">
-      <h3 style="margin:0 0 6px 0;">Managed by <a href="https://github.com/aditsuru">@aditsuru</a></h3>
-      <p style="margin:0;">Maintainer • Mentor • Organizer — keeping the Homies community running and building.</p>
-    </td>
-  </tr>
-</table>
+<div align="left">
+  <a href="https://github.com/aditsuru-git">
+    <img src="https://github.com/aditsuru.png?size=96" width="90" align="left" alt="@aditsuru-git" style="margin-right: 20px" />
+  </a>
+
+  <h3>
+    Managed by <a href="https://github.com/aditsuru">@aditsuru</a>
+  </h3>
+  <p>
+    Maintainer • Mentor • Organizer — keeping the Homies community running and building.
+  </p>
+  <br clear="left" />
+</div>
 
 [discord-shield]: https://img.shields.io/discord/1313767817996402698?logo=discord&logoColor=white&label=discord&color=4d3dff
 [discord-url]: https://discord.com/invite/HP2YPGSrWU
