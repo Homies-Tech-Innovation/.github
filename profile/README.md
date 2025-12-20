@@ -8,7 +8,7 @@
   <a href="https://github.com/homies-tech-innovation">
     <img src="./assets/logo.png" alt="Logo" width="100" height="100">
   </a>
-  <h3 align="center">Collaborative skill-building and collective problem-solving</h3>
+  <h3 align="center">Innovating With The Homies</h3>
 
 [![Discord](https://img.shields.io/discord/1313767817996402698?logo=discord&logoColor=white&label=discord&color=4d3dff)](https://discord.com/invite/HP2YPGSrWU)
 [![Homies](https://img.shields.io/github/followers/homies-tech-innovation?logo=github&logoColor=black&label=Homies&color=2ea44f)](https://github.com/orgs/homies-tech-innovation/people)
