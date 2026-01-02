@@ -27,20 +27,6 @@ Our mission is simple: **learn together, build together, grow together**. By com
 
 ## Our Top Projects
 
-<h3 align="left">Research Engine</h3>
-
-An AI tool that helps you research about market, topics, and anything. [Get demo here](https://github.com/homies-tech-innovation/research-engine-server)
-
-<p align="left">
-  
-  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=research-engine-server&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/research-engine-server)
-  &nbsp; 
-  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=research-engine-client&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/research-engine-client)
-  &nbsp; 
-  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=research-engine-agent&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/research-engine-agent)
-  
-</p>
-
 <h3 align="left">Aethel</h3>
 
 Experience a live, AI-powered writing space for all your stories and docs. [Get demo here](https://github.com/homies-tech-innovation/aethel)
