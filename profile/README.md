@@ -27,13 +27,13 @@ Our mission is simple: **learn together, build together, grow together**. By com
 
 ## Our Top Projects
 
-<h3 align="left">Aethel</h3>
+<h3 align="left">Rust CLI Chat</h3>
 
-Experience a live, AI-powered writing space for all your stories and docs. [Get demo here](https://github.com/homies-tech-innovation/aethel)
+A real-time chat app made in Rust. [Get demo here](https://github.com/homies-tech-innovation/cli-chat)
 
 <p align="left">
   
-  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=aethel&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/aethel)
+  [![GitHub Repo](https://github-readme-stats-ten-rho-72.vercel.app/api/pin/?username=homies-tech-innovation&repo=cli-chat&theme=github_dark_dimmed&hide_border=true)](https://github.com/homies-tech-innovation/cli-chat)
   
 </p>
 
